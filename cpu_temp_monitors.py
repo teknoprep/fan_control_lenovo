@@ -15,6 +15,14 @@ HDD_SENSORS_CHECK_INTERVAL = 60   # seconds
 #   If CPU temp >= temp_threshold, fan_value is applied.
 CPU_THRESHOLDS = [
     [0,   0],
+    [47,  1],
+    [48,  2],
+    [49,  3],
+    [50,  4],
+    [51,  5],
+    [52,  6],
+    [53,  7],
+    [54,  8],
     [55,  10],
     [60,  20],
     [65,  25],
