@@ -11,6 +11,8 @@ import sched
 CPU_SENSORS_CHECK_INTERVAL = 5    # seconds
 HDD_SENSORS_CHECK_INTERVAL = 60   # seconds
 
+# CPU temperature thresholds: [ [temp_threshold, fan_value], ... ]
+#   If CPU temp >= temp_threshold, fan_value is applied.
 CPU_THRESHOLDS = [
     [0,   0],
     [55,  10],
@@ -20,23 +22,35 @@ CPU_THRESHOLDS = [
     [75,  100],
 ]
 
+# HDD temperature thresholds: [ [temp_threshold, fan_value], ... ]
+#   If HDD temp >= temp_threshold, fan_value is applied.
 HDD_THRESHOLDS = [
     [0,   0],
-    [50,  10],
-    [55,  30],
-    [60,  50],
+    [55,  10],
+    [58,  20],
+    [60,  30],
+    [65,  50],
     [75,  100],
 ]
 
+# List of HDD devices you want to monitor. Adjust as needed.
 HDD_LIST = [
     "/dev/sda",
     "/dev/sdb",
     "/dev/sdc",
-    # ...
+    "/dev/sdd",
+    "/dev/sde",
+    "/dev/sdf",
+    "/dev/sdg",
+    "/dev/sdh",
+    "/dev/sdi",
+    "/dev/sdj",
+    "/dev/sdk",
+    "/dev/sdl",
 ]
 ###############################################################################
 
-# Global (or module-level) variables to store current fan speed needs:
+# Global variables for storing current fan speed needs
 cpu_fan_speed = 0
 hdd_fan_speed = 0
 
@@ -61,7 +75,7 @@ def get_hdd_temperature(device):
     """Runs 'smartctl -A <device>' and returns 'Current Drive Temperature' as float, or None."""
     try:
         output = subprocess.check_output(["smartctl", "-A", device]).decode("utf-8")
-        # "Current Drive Temperature:     50 C"
+        # Example line: "Current Drive Temperature:     50 C"
         match = re.search(r"Current Drive Temperature:\s+(\d+)\s*C", output)
         if match:
             return float(match.group(1))
@@ -106,6 +120,7 @@ def update_final_fan_speed():
     Decide the final fan speed (the higher of CPU vs HDD)
     and set it via ipmitool.
     """
+    global cpu_fan_speed, hdd_fan_speed
     final_speed = max(cpu_fan_speed, hdd_fan_speed)
     print(f"[DECISION] CPU={cpu_fan_speed}, HDD={hdd_fan_speed} -> final={final_speed}")
     set_fan_speed(final_speed)
@@ -127,7 +142,7 @@ def check_cpu():
     # After updating CPU fan speed, decide final fan speed
     update_final_fan_speed()
 
-    # Schedule next CPU check
+    # Schedule the next CPU check
     scheduler.enter(CPU_SENSORS_CHECK_INTERVAL, 1, check_cpu)
 
 def check_hdds():
@@ -152,16 +167,17 @@ def check_hdds():
     # After updating HDD fan speed, decide final fan speed
     update_final_fan_speed()
 
-    # Schedule next HDD check
+    # Schedule the next HDD check
     scheduler.enter(HDD_SENSORS_CHECK_INTERVAL, 2, check_hdds)
 
 def main():
     print("[START] Starting scheduled temperature monitoring...")
+
     # Schedule initial calls
     scheduler.enter(0, 1, check_cpu)   # Start CPU checks immediately
     scheduler.enter(0, 2, check_hdds)  # Start HDD checks immediately
 
-    # Run scheduler (this blocks until the script exits)
+    # Run the scheduler (blocks until the script exits)
     scheduler.run()
 
 if __name__ == "__main__":
