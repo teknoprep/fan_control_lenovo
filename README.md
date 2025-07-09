@@ -7,6 +7,7 @@ Should work on other servers
 
 ## service setup
 root@vm241:/etc/systemd/system# cat cpu_temp_monitor.service 
+
 [Unit]
 Description=CPU Temperature Monitor Service
 After=network.target
